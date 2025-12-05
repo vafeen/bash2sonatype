@@ -1,6 +1,5 @@
 #include "main.hpp"
 
-
 int main(int argc, char *argv[]) {
     if (argc == 1) {
         help();
@@ -17,8 +16,8 @@ int main(int argc, char *argv[]) {
         } else if (arg == CLEANUP) {
             cleanup();
         } else {
-            cout << "Ошибка: Неизвестный аргумент '" << arg << "'" << endl;
-            cout << "Используйте " << HELP << " для получения справки." << endl;
+            cout << "Error: Unknown argument '" << arg << "'" << endl;
+            cout << "Use " << HELP << " for help." << endl;
             return 1;
         }
     }
