@@ -1,3 +1,6 @@
+#ifndef __linux__
+#error "This program can only be compiled on Linux!"
+#endif
 #include "main.hpp"
 
 vector <string> dependencies = {
