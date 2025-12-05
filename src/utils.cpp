@@ -50,7 +50,6 @@ void setup() {
     system("echo 'pinentry-program /usr/bin/pinentry-curses\ndefault-cache-ttl 600\nmax-cache-ttl 7200' > ~/.gnupg/gpg-agent.conf");
     system("chmod 600 ~/.gnupg/gpg-agent.conf");
 
-    // 7. Перезапуск gpg-agent
     cout << "Restarting gpg-agent..." << '\n';
     system("gpg-connect-agent reloadagent /bye");
 
