@@ -1,0 +1,9 @@
+#!/bin/bash
+
+sudo apt update -y
+sudo apt install -y \
+	g++ \
+	build-essential \
+	cmake \
+	git \
+	pkg-config
