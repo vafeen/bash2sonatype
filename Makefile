@@ -7,7 +7,9 @@ OBJ=$(patsubst src/%.cpp,build/%.o,$(SRC))
 EXEC=$(TARGET)
 DEPS=$(OBJ:.o=.d)
 
-all: build
+FORMAT_SOURCES=$(shell find src -name "*.cpp" -o -name "*.cc" -o -name "*.h" -o -name "*.hpp")
+
+all: build format
 
 $(EXEC): $(OBJ)
 	@mkdir -p $(@D)
@@ -22,6 +24,14 @@ build/%.o: src/%.cpp
 build: $(EXEC)
 
 clean:
-	rm -rf build
+	@echo "Cleaning build files..."
+	@find build -name "*.o" -type f -delete
+	@find build -name "*.d" -type f -delete
+	@rm -f $(EXEC)
 
-.PHONY: all build clean
+format:
+	@echo "Formatting source files..."
+	@clang-format -i $(FORMAT_SOURCES)
+
+
+.PHONY: all build clean format

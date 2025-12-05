@@ -2,4 +2,4 @@ maven
 *.sensitive
 /build
 make2maven
-/old_scripts
+/scripts
