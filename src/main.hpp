@@ -1,3 +1,6 @@
+#ifndef __linux__
+    #error "This program can only be compiled on Linux!"
+#endif
 #ifndef MAIN_HPP
 #define MAIN_HPP
 
