@@ -34,4 +34,4 @@ format:
 	@clang-format -i $(FORMAT_SOURCES)
 
 
-.PHONY: all build clean format check-format
+.PHONY: all build clean format
