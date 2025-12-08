@@ -1,0 +1,40 @@
+#!/bin/bash
+
+sudo apt update
+sudo apt upgrade -y
+
+sudo apt install -y \
+    curl \
+    wget \
+    git \
+    unzip \
+    software-properties-common \
+    ca-certificates \
+    build-essential
+
+sudo apt install -y openjdk-17-jdk
+
+sudo apt install -y maven
+mvn -version
+
+sudo apt install -y \
+    gnupg \
+    gnupg-agent \
+    gpg \
+    gpgconf \
+    pinentry-curses
+
+# Создать директорию для GPG
+mkdir -p ~/.gnupg
+chmod 700 ~/.gnupg
+
+# Создать базовый конфиг
+cat > ~/.gnupg/gpg-agent.conf << 'EOF'
+pinentry-program /usr/bin/pinentry-curses
+default-cache-ttl 600
+max-cache-ttl 7200
+EOF
+
+# Проверить GPG
+gpg --version
+

@@ -2,4 +2,3 @@ maven
 *.sensitive
 /build
 make2maven
-/scripts

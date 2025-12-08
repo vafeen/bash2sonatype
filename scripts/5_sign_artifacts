@@ -1,0 +1,306 @@
+#!/bin/bash
+
+# ===========================================
+# ШАГ 4: ПОДПИСЬ АРТЕФАКТОВ GPG
+# ===========================================
+
+# ===========================================
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+# ===========================================
+
+check_files_for_signing() {
+    log_info "Проверка файлов для подписи..."
+
+    required_files=(
+        "$FINAL_JAR"
+        "$SOURCES_JAR"
+        "$JAVADOC_JAR"
+        "$POM_FILE"
+    )
+
+    local all_found=true
+
+    for file in "${required_files[@]}"; do
+        if [ -f "$file" ]; then
+            log_success "Файл найден: $(basename "$file")"
+        else
+            log_error "Файл не найден: $(basename "$file")"
+            all_found=false
+        fi
+    done
+
+    if [ "$all_found" = false ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+sign_all_artifacts() {
+    log_info "Подписание всех артефактов..."
+
+    # Проверяем файлы
+    if ! check_files_for_signing; then
+        return 1
+    fi
+
+    # Создаем временную директорию GPG
+    local temp_gpg_home="$BUILD_DIR/gpg-temp-home"
+    rm -rf "$temp_gpg_home"
+    mkdir -p "$temp_gpg_home"
+    chmod 700 "$temp_gpg_home"
+    
+    # Экспортируем GPG_HOME
+    export GNUPGHOME="$temp_gpg_home"
+    
+    log_info "Импорт ключа..."
+    
+    # Импортируем ключ
+    if ! gpg --batch --import "$GPG_KEY_FILE" 2>/dev/null; then
+        log_error "Не удалось импортировать ключ"
+        rm -rf "$temp_gpg_home"
+        return 1
+    fi
+
+    # Получаем ID ключа
+    local key_id=$(gpg --list-secret-keys --with-colons 2>/dev/null | \
+        grep '^sec:' | head -1 | cut -d: -f5)
+    
+    if [ -z "$key_id" ]; then
+        log_error "Не удалось получить ID ключа"
+        rm -rf "$temp_gpg_home"
+        return 1
+    fi
+    
+    log_success "Ключ импортирован, ID: ${key_id: -8}"
+
+    # Подписываем файлы
+    local files=("$FINAL_JAR" "$SOURCES_JAR" "$JAVADOC_JAR" "$POM_FILE")
+    local success_count=0
+    
+    echo ""
+    echo "ПОДПИСЬ ФАЙЛОВ:"
+    echo "--------------"
+
+    for file in "${files[@]}"; do
+        local filename=$(basename "$file")
+        echo -n "  $filename ... "
+        
+        # Способ 1: Используем --passphrase-file
+        # Создаем временный файл с паролем
+        local passphrase_file="$BUILD_DIR/passphrase.txt"
+        echo "$GPG_PASSPHRASE" > "$passphrase_file"
+        chmod 600 "$passphrase_file"
+        
+        if gpg --batch --yes \
+            --passphrase-file "$passphrase_file" \
+            --pinentry-mode loopback \
+            --local-user "$key_id" \
+            --detach-sign \
+            --armor \
+            "$file" 2>/dev/null; then
+            
+            if [ -f "${file}.asc" ]; then
+                echo "✓"
+                ((success_count++))
+            else
+                echo "✗ (подпись не создана)"
+            fi
+        else
+            echo "✗ (ошибка)"
+        fi
+        
+        # Удаляем временный файл с паролем
+        rm -f "$passphrase_file"
+    done
+
+    # Очистка
+    rm -rf "$temp_gpg_home"
+    unset GNUPGHOME
+
+    echo ""
+    if [ $success_count -eq ${#files[@]} ]; then
+        log_success "Все файлы подписаны ($success_count/${#files[@]})"
+        return 0
+    else
+        log_error "Подписано только $success_count из ${#files[@]} файлов"
+        return 1
+    fi
+}
+
+
+verify_signatures() {
+    log_info "Проверка подписей..."
+
+    local files=(
+        "$FINAL_JAR"
+        "$SOURCES_JAR"
+        "$JAVADOC_JAR"
+        "$POM_FILE"
+    )
+
+    local all_verified=true
+    local verified_count=0
+
+    for file in "${files[@]}"; do
+        local signature_file="${file}.asc"
+        if [ -f "$signature_file" ]; then
+            log_success "Подпись найдена: $(basename "$signature_file")"
+            ((verified_count++))
+        else
+            log_error "Подпись не найдена для: $(basename "$file")"
+            all_verified=false
+        fi
+    done
+
+    if [ "$all_verified" = false ]; then
+        log_error "Найдено только $verified_count из ${#files[@]} подписей"
+        return 1
+    else
+        log_success "Все ${#files[@]} подписей найдены"
+        return 0
+    fi
+}
+
+
+copy_all_artifacts_to_maven_structure() {
+    log_info "Копирование ВСЕХ артефактов в Maven структуру..."
+
+    # ВСЕ файлы
+    local all_files=(
+        # Основные файлы
+        "$FINAL_JAR"
+        "$SOURCES_JAR"
+        "$JAVADOC_JAR"
+        "$POM_FILE"
+        
+        # Подписи
+        "$FINAL_JAR.asc"
+        "$SOURCES_JAR.asc"
+        "$JAVADOC_JAR.asc"
+        "$POM_FILE.asc"
+        
+        # Checksums md5 
+        "$FINAL_JAR.md5"
+        "$SOURCES_JAR.md5"
+        "$JAVADOC_JAR.md5"
+        "$POM_FILE.md5"
+
+        # Checksums sha1
+        "$FINAL_JAR.sha1"
+        "$SOURCES_JAR.sha1"
+        "$JAVADOC_JAR.sha1"
+        "$POM_FILE.sha1"
+    )
+    
+    echo "Копирование из $BUILD_DIR в $MAVEN_DIR:"
+    echo "--------------------------------------"
+    
+    local copied_count=0
+    
+    for file in "${all_files[@]}"; do
+        local source_file="$file"
+        if [ -f "$source_file" ]; then
+            cp "$source_file" "$MAVEN_DIR/"
+            echo "  ✓ $file"
+            ((copied_count++))
+        else
+            echo "  ✗ $file (не найден в $BUILD_DIR)"
+        fi
+    done
+
+    echo ""
+    if [ $copied_count -eq ${#all_files[@]} ]; then
+        log_success "Все ${#all_files[@]} файлов скопированы"
+        return 0
+    else
+        log_error "Скопированы только $copied_count из ${#all_files[@]} файлов"
+        return 1
+    fi
+}
+
+
+
+
+verify_maven_structure() {
+    log_info "Проверка структуры Maven репозитория..."
+
+    local required_files=(
+        # Основные файлы
+        "$FINAL_JAR"
+        "$SOURCES_JAR"
+        "$JAVADOC_JAR"
+        "$POM_FILE"
+        
+        # Подписи
+        "$FINAL_JAR.asc"
+        "$SOURCES_JAR.asc"
+        "$JAVADOC_JAR.asc"
+        "$POM_FILE.asc"
+        
+        # Checksums md5 
+        "$FINAL_JAR.md5"
+        "$SOURCES_JAR.md5"
+        "$JAVADOC_JAR.md5"
+        "$POM_FILE.md5"
+
+        # Checksums sha1
+        "$FINAL_JAR.sha1"
+        "$SOURCES_JAR.sha1"
+        "$JAVADOC_JAR.sha1"
+        "$POM_FILE.sha1"
+    )
+
+    echo "Ожидаемая структура файлов (16 файлов):"
+    echo "--------------------------------------"
+    
+    local missing_files=()
+    local found_count=0
+    
+    for required_file in "${required_files[@]}"; do
+        local file_path="$MAVEN_DIR/$(basename $required_file)"
+        
+        if [ -f "$file_path" ]; then
+            echo "  ✓ $required_file"
+            ((found_count++))
+        else
+            echo "  ✗ $required_file (ОТСУТСТВУЕТ)"
+            missing_files+=("$required_file")
+        fi
+    done
+
+    echo ""
+    echo "Итого: найдено $found_count из ${#required_files[@]} файлов"
+    
+    # Показываем реальное содержимое
+    echo ""
+    echo "Реальное содержимое $MAVEN_DIR:"
+    echo "------------------------------"
+    if [ -d "$MAVEN_DIR" ]; then
+        ls -la "$MAVEN_DIR"
+    else
+        echo "Директория не существует!"
+    fi
+    echo ""
+    
+    if [ ${#missing_files[@]} -eq 0 ]; then
+        log_success "✅ ВСЕ ${#required_files[@]} файлов присутствуют!"
+        return 0
+    else
+        log_error "❌ Отсутствуют файлы: ${#missing_files[@]}"
+        for missing in "${missing_files[@]}"; do
+            echo "  - $missing"
+        done
+        return 1
+    fi
+}
+
+
+# ===========================================
+# ОСНОВНОЙ ВЫЗОВ ФУНКЦИЙ
+# ===========================================
+#
+# Попробуйте разные методы:
+# 1. sign_all_artifacts
+# 2. sign_all_artifacts_simple (нужен expect)
+# 3. sign_all_artifacts_gpg_agent

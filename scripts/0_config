@@ -1,0 +1,69 @@
+#!/bin/bash
+export PUBLISHER="make2maven"
+
+export BASE_DIR="$(pwd)"
+
+export PROJECT_NAME="Test project"
+export GROUP_ID="io.github.vafeen"
+
+export ARTIFACT_MODULE_NAME="test-publish"
+
+
+
+
+
+
+export VERSION="1.0.0"
+
+export SOURCES_PACKAGE="ru.vafeen.testpublish"
+export PROJECT_DESCRIPTION="Test project"
+export PROJECT_URL="https://github.com/vafeen/testproject"
+export SCM_URL="https://github.com/vafeen/testproject.git"
+
+export DEVELOPER_NAME="A"
+export DEVELOPER_EMAIL="666av6@gmail.com"
+export ORGANIZATION="A"
+export ORGANIZATION_URL="https://example.com"
+
+# Путь к исходному коду
+export ARTIFACT_NAME="${ARTIFACT_MODULE_NAME//-/_}"
+export ARTIFACT_PREFIX="$ARTIFACT_NAME-$VERSION"
+export SOURCE_CODE_PATH="$ARTIFACT_MODULE_NAME/src/main/java"
+export BUILD_DIR="$BASE_DIR/$PUBLISHER/build"
+
+# Имена файлов
+export FINAL_JAR="$BUILD_DIR/$ARTIFACT_PREFIX.jar"
+export SOURCES_JAR="$BUILD_DIR/$ARTIFACT_PREFIX-sources.jar"
+export JAVADOC_JAR="$BUILD_DIR/$ARTIFACT_PREFIX-javadoc.jar"
+export POM_FILE="$BUILD_DIR/$ARTIFACT_PREFIX.pom"
+export SETTINGS_FILE="$BUILD_DIR/settings.xml"
+
+# Пути для bundle
+export MAVEN_REPO_DIR="$BUILD_DIR/maven-repo"
+export MAVEN_DIR="$MAVEN_REPO_DIR/$(echo $GROUP_ID | tr '.' '/')/$ARTIFACT_NAME/$VERSION"
+
+export BUNDLE_ZIP="$BUILD_DIR/$ARTIFACT_PREFIX.tar.gz"
+
+export REPOSITORY_ID="ossrh"
+export REPOSITORY_URL="https://central.sonatype.com/"
+
+check_config() {
+    echo "=== ПРОВЕРКА КОНФИГУРАЦИИ ==="
+    echo "Base Dir: $BASE_DIR"
+    echo "Group ID: $GROUP_ID"
+    echo "Artifact/Module Name: $ARTIFACT_NAME"
+    echo "Version: $VERSION"
+    echo "Final JAR: $(basename "$FINAL_JAR")"
+    echo "Sources JAR: $(basename "$SOURCES_JAR")"
+    echo "Javadoc JAR: $(basename "$JAVADOC_JAR")"
+    echo "POM File: $(basename "$POM_FILE")"
+    echo "Maven Dir: $MAVEN_DIR"
+    echo "Target Dir: $BUILD_DIR"
+    echo "Repository ID: $REPOSITORY_ID"
+    echo "Repository URL: $REPOSITORY_URL"
+    echo "Username set: $(if [ -z "$SONATYPE_USERNAME" ]; then echo "NO"; else echo "YES"; fi)"
+    echo "Password set: $(if [ -z "$SONATYPE_PASSWORD" ]; then echo "NO"; else echo "YES"; fi)"
+    echo "GPG Key ID: $GPG_KEY_ID"
+    echo "GPG Passphrase set: $(if [ -z "$GPG_PASSPHRASE" ]; then echo "NO"; else echo "YES"; fi)"
+    echo "=============================="
+}

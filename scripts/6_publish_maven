@@ -1,0 +1,223 @@
+#!/bin/bash
+
+# ===========================================
+# ШАГ 6: ПУБЛИКАЦИЯ В MAVEN CENTRAL
+# ===========================================
+
+# ===========================================
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+# ===========================================
+
+show_publication_info() {
+    echo "Данные для публикации:"
+    echo "----------------------"
+    echo "Группа:       $GROUP_ID"
+    echo "Артефакт:     $ARTIFACT_NAME"
+    echo "Версия:       $VERSION"
+    echo "Пакет:        $SOURCES_PACKAGE"
+    echo "Репозиторий:  $REPOSITORY_URL"
+    echo ""
+}
+
+confirm_publication() {
+    read -p "Продолжить публикацию? (y/n): " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log_success "Публикация отменена"
+        exit 0
+    fi
+}
+
+check_files_for_publication() {
+    log_info "Проверка файлов для публикации..."
+
+    required_files=(
+        "$FINAL_JAR"
+        "$SOURCES_JAR"
+        "$JAVADOC_JAR"
+        "$POM_FILE"
+        "${FINAL_JAR}.asc"
+        "${SOURCES_JAR}.asc"
+        "${JAVADOC_JAR}.asc"
+        "${POM_FILE}.asc"
+        "$SETTINGS_FILE"
+    )
+
+    local all_found=true
+
+    for file in "${required_files[@]}"; do
+        if [ -f "$file" ]; then
+            log_success "Файл найден: $(basename "$file")"
+        else
+            log_error "Файл не найден: $(basename "$file")"
+            all_found=false
+        fi
+    done
+
+    if [ "$all_found" = false ]; then
+        log_error "Не все файлы найдены для публикации"
+        return 1
+    else
+        return 0
+    fi
+}
+
+publish_to_sonatype_central() {
+    log_info "Загрузка в Sonatype Central..."
+
+    # Создаем токен авторизации
+    local token=$(echo -n "$SONATYPE_USERNAME:$SONATYPE_PASSWORD" | base64)
+
+    if [ -z "$token" ]; then
+        log_error "Не удалось создать токен авторизации"
+        return 1
+    fi
+
+    log_info "Отправка bundle через Sonatype Central API..."
+
+    echo "Используемый файл: $BUNDLE_ZIP"
+    echo "Размер файла: $(ls -lh "$BUNDLE_ZIP" | awk '{print $5}')"
+    
+    # Сохраняем ответ для анализа
+    local response_file="$BUILD_DIR/upload_response.txt"
+    
+    # Загружаем bundle с выводом подробной информации
+    echo "Выполняю запрос к Sonatype Central..."
+    echo "URL: https://central.sonatype.com/api/v1/publisher/upload"
+    echo ""
+    
+    local http_code=$(curl --request POST \
+        --silent \
+        --show-error \
+        --write-out "HTTP_STATUS:%{http_code}" \
+        --header "Authorization: Bearer $token" \
+        --header "User-Agent: Maven-Publisher/1.0" \
+        --form "bundle=@$BUNDLE_ZIP" \
+        --output "$response_file" \
+        https://central.sonatype.com/api/v1/publisher/upload)
+    
+    local exit_code=$?
+    
+    # Извлекаем HTTP статус
+    local http_status=$(echo "$http_code" | grep -o "HTTP_STATUS:[0-9]*" | cut -d: -f2)
+    
+    echo ""
+    echo "Результат запроса:"
+    echo "Код выхода curl: $exit_code"
+    echo "HTTP статус: $http_status"
+    
+    # Показываем ответ сервера
+    if [ -f "$response_file" ] && [ -s "$response_file" ]; then
+        echo ""
+        echo "Ответ сервера:"
+        cat "$response_file"
+        echo ""
+    fi
+    
+    # Проверяем результат
+    if [ $exit_code -eq 0 ] && [ "$http_status" = "200" ] || [ "$http_status" = "201" ]; then
+        log_success "✅ Bundle успешно загружен в Sonatype Central"
+        rm -f "$response_file" 2>/dev/null
+        return 0
+    else
+        log_error "❌ Ошибка загрузки bundle"
+    fi
+}
+
+show_publication_success() {
+    echo ""
+    echo "Артефакты опубликованы:"
+    echo "  • $FINAL_JAR"
+    echo "  • $SOURCES_JAR"
+    echo "  • $JAVADOC_JAR"
+    echo ""
+
+    if [ "$IS_SNAPSHOT" = "true" ]; then
+        log_success "SNAPSHOT версия опубликована"
+    else
+        log_info "RELEASE версия в staging репозитории"
+        echo "Для выпуска в Central:"
+        echo "1. https://central.sonatype.com"
+        echo "2. Найти staging репозиторий"
+        echo "3. Close → Release"
+    fi
+
+    echo ""
+    echo "Ссылка для проверки:"
+    echo "https://repo1.maven.org/maven2/$(echo $GROUP_ID | tr '.' '/')/$ARTIFACT_NAME/$VERSION/"
+}
+
+show_publication_error() {
+    log_error "Ошибка при публикации"
+}
+
+cleanup_after_publication() {
+    log_info "Очистка временных файлов..."
+
+    # Удаляем созданные файлы
+    if rm -f "$POM_FILE" "$SETTINGS_FILE" 2>/dev/null; then
+        log_success "Файлы удалены"
+    else
+        log_error "Ошибка удаления файлов"
+        return 1
+    fi
+
+    # Удаляем подписи
+    if rm -f "${FINAL_JAR}.asc" "${SOURCES_JAR}.asc" "${JAVADOC_JAR}.asc" "${POM_FILE}.asc" 2>/dev/null; then
+        log_success "Подписи удалены"
+    else
+        log_error "Ошибка удаления подписей"
+        return 1
+    fi
+
+    # Очищаем рабочую директорию
+    if cleanup_work_dir; then
+        log_success "Рабочая директория очищена"
+    else
+        log_error "Ошибка очистки рабочей директории"
+        return 1
+    fi
+
+    return 0
+}
+
+perform_publication() {
+    log_info "Начало публикации..."
+
+    # Публикуем
+    if publish_to_maven; then
+        # Показываем успех
+        show_publication_success
+
+#        # Очищаем временные файлы
+#        if cleanup_after_publication; then
+#            log_success "Процесс публикации завершен"
+#            return 0
+#        else
+#            log_error "Ошибка при очистке"
+#            return 1
+#        fi
+    else
+        # Показываем ошибку
+        show_publication_error
+        return 1
+    fi
+}
+
+# ===========================================
+# ОСНОВНОЙ ВЫЗОВ ФУНКЦИЙ
+# ===========================================
+
+#log_step "5: Публикация в Maven Central"
+#
+## Показываем информацию о публикации
+#show_publication_info
+#
+## Подтверждаем публикацию
+#confirm_publication
+#
+## Проверяем файлы
+#check_files_for_publication
+#
+## Выполняем публикацию
+#perform_publication
