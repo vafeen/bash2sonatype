@@ -23,7 +23,7 @@ build/%.o: src/%.cpp
 
 build: $(EXEC)
 
-clean:
+source-clean:
 	@echo "Cleaning build files..."
 	@find build -name "*.o" -type f -delete
 	@find build -name "*.d" -type f -delete
@@ -34,4 +34,4 @@ format:
 	@clang-format -i $(FORMAT_SOURCES)
 
 
-.PHONY: all build clean format
+.PHONY: all build source-clean format

@@ -1,0 +1,43 @@
+# 1. Очистить и подготовить
+make -C ./make2maven USER_CONFIG=./my_config.mk clean-all
+make -C ./make2maven USER_CONFIG=./my_config.mk create-work-dir
+
+# 2. Скопировать JAR (после сборки Gradle)
+make -C ./make2maven USER_CONFIG=./my_config.mk copy-jar-from-gradle
+
+# 3. Проверить всё
+make -C ./make2maven USER_CONFIG=./my_config.mk check-config
+make -C ./make2maven USER_CONFIG=./my_config.mk check-commands
+make -C ./make2maven USER_CONFIG=./my_config.mk check-source
+
+# 4. Подготовить JAR файлы
+make -C ./make2maven USER_CONFIG=./my_config.mk check-main-jar-file
+make -C ./make2maven USER_CONFIG=./my_config.mk check-sources-jar-file
+make -C ./make2maven USER_CONFIG=./my_config.mk check-javadoc-jar-file
+make -C ./make2maven USER_CONFIG=./my_config.mk show-jars
+
+# 5. Создать POM и settings
+make -C ./make2maven USER_CONFIG=./my_config.mk generate-pom
+make -C ./make2maven USER_CONFIG=./my_config.mk generate-settings
+
+# 6. Подписать артефакты
+make -C ./make2maven USER_CONFIG=./my_config.mk check-files-for-signing
+make -C ./make2maven USER_CONFIG=./my_config.mk sign-artifacts
+make -C ./make2maven USER_CONFIG=./my_config.mk verify-signatures
+
+# 7. Создать контрольные суммы
+make -C ./make2maven USER_CONFIG=./my_config.mk generate-checksums
+
+# 8. Создать Maven структуру
+make -C ./make2maven USER_CONFIG=./my_config.mk create-maven-dir-structure
+make -C ./make2maven USER_CONFIG=./my_config.mk copy-all-to-maven
+make -C ./make2maven USER_CONFIG=./my_config.mk verify-maven-structure
+
+# 9. Создать bundle
+make -C ./make2maven USER_CONFIG=./my_config.mk create-bundle-tar
+
+# 10. Опубликовать
+make -C ./make2maven USER_CONFIG=./my_config.mk publish-to-sonatype
+
+# Бонус: полная команда одной строкой
+make -C ./make2maven USER_CONFIG=./my_config.mk all
