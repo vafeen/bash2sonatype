@@ -5,15 +5,15 @@ remove_utils() {
     
     # Удаление Java
     echo "1. Удаление Java..."
-    sudo apt remove --purge -y openjdk-17-jdk
+    apt remove --purge -y openjdk-17-jdk
     
     # Удаление Maven
     echo "2. Удаление Maven..."
-    sudo apt remove --purge -y maven
+    apt remove --purge -y maven
     
     # Удаление GPG и связанных пакетов
     echo "3. Удаление GPG..."
-    sudo apt remove --purge -y \
+    apt remove --purge -y \
         gnupg \
         gnupg-agent \
         gpg \
@@ -22,7 +22,7 @@ remove_utils() {
     
     # Удаление базовых утилит
     echo "4. Удаление базовых утилит..."
-    sudo apt remove --purge -y \
+    apt remove --purge -y \
         curl \
         wget \
         git \
@@ -33,8 +33,8 @@ remove_utils() {
     
     # Автоудаление неиспользуемых зависимостей
     echo "5. Очистка зависимостей..."
-    sudo apt autoremove -y
-    sudo apt autoclean -y
+    apt autoremove -y
+    apt autoclean -y
     
     # Очистка конфигурационных файлов
     echo "6. Очистка конфигурационных файлов..."
@@ -43,8 +43,8 @@ remove_utils() {
     rm -rf ~/.gradle
     
     # Очистка кэша APT
-    sudo rm -rf /var/cache/apt/archives/*
-    sudo rm -rf /var/lib/apt/lists/*
+    rm -rf /var/cache/apt/archives/*
+    rm -rf /var/lib/apt/lists/*
     
     echo "=== УДАЛЕНИЕ ЗАВЕРШЕНО ==="
     echo ""
@@ -53,3 +53,5 @@ remove_utils() {
     echo "Maven: $(which mvn 2>/dev/null || echo 'удален')"
     echo "GPG: $(which gpg 2>/dev/null || echo 'удален')"
 }
+
+remove_utils

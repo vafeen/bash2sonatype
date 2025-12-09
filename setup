@@ -1,9 +1,44 @@
 #!/bin/bash
 
-sudo apt update -y
-sudo apt install -y \
-	g++ \
-	build-essential \
-	cmake \
-	git \
-	pkg-config
+export DEBIAN_FRONTEND=noninteractive
+
+export TZ=Europe/Moscow
+
+apt update
+apt upgrade -y
+
+apt install -y \
+    curl \
+    wget \
+    git \
+    unzip \
+    software-properties-common \
+    ca-certificates \
+    build-essential
+
+apt install -y openjdk-17-jdk
+
+# Для установки Maven если нужно
+# apt install -y maven
+# mvn -version
+
+apt install -y \
+    gnupg \
+    gnupg-agent \
+    gpg \
+    gpgconf \
+    pinentry-curses
+
+# Создать директорию для GPG
+mkdir -p ~/.gnupg
+chmod 700 ~/.gnupg
+
+# Создать базовый конфиг
+cat > ~/.gnupg/gpg-agent.conf << 'EOF'
+pinentry-program /usr/bin/pinentry-curses
+default-cache-ttl 600
+max-cache-ttl 7200
+EOF
+
+# Проверить GPG
+gpg --version
