@@ -54,7 +54,7 @@ log_step "10: Создание bundle ZIP"
 create_bundle_tar
 
 
-publish_to_sonatype_central
+#publish_to_sonatype_central
 
 #  log_step "13: Очистка"
 #  cleanup_work_dir

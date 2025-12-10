@@ -62,6 +62,7 @@ check_required_vars() {
     [[ -z "$GROUP_ID" ]] && missing_vars+=("GROUP_ID")
     [[ -z "$ARTIFACT_NAME" ]] && missing_vars+=("ARTIFACT_NAME")
     [[ -z "$VERSION" ]] && missing_vars+=("VERSION")
+    [[ -z "$INCEPTION_YEAR" ]] && missing_vars+=("INCEPTION_YEAR")
     [[ -z "$SONATYPE_USERNAME" ]] && missing_vars+=("SONATYPE_USERNAME")
     [[ -z "$SONATYPE_PASSWORD" ]] && missing_vars+=("SONATYPE_PASSWORD")
     [[ -z "$GPG_KEY_ID" ]] && missing_vars+=("GPG_KEY_ID")

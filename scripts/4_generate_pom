@@ -15,67 +15,90 @@ generate_pom_xml() {
     local pom_filename="${ARTIFACT_NAME}-${VERSION}.pom"
     export POM_FILE="$BUILD_DIR/$pom_filename"
 
+    # Парсим SCM URL для connection
+    local scm_connection
+    local scm_developer_connection
+
+    # Определяем тип упаковки по расширению FINAL_JAR
+    local packaging_type="jar"
+    if [[ "$FINAL_JAR" == *.aar ]]; then
+        packaging_type="aar"
+        log_info "Определен тип упаковки: aar"
+    else
+        log_info "Определен тип упаковки: jar"
+    fi
+
+    # Парсим SCM URL
+    if [[ "$SCM_URL" == https://github.com/* ]]; then
+        local repo_path="${SCM_URL#https://github.com/}"
+        repo_path="${repo_path%.git}"
+        repo_path="${repo_path%/}"
+        scm_connection="scm:git:git://github.com/${repo_path}.git"
+        scm_developer_connection="scm:git:ssh://git@github.com/${repo_path}.git"
+    else
+        # Общий случай
+        scm_connection="scm:git:git://$(echo "$SCM_URL" | sed 's|https://||; s|http://||')"
+        scm_developer_connection="scm:git:ssh://$(echo "$SCM_URL" | sed 's|https://||; s|http::://' | sed 's|github.com|git@github.com|')"
+    fi
+
     cat > "$POM_FILE" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>$GROUP_ID</groupId>
-    <artifactId>$ARTIFACT_NAME</artifactId>
-    <version>$VERSION</version>
-
-    <name>$PROJECT_NAME</name>
-    <description>$PROJECT_DESCRIPTION</description>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <!--  This module was also published with a richer model, Gradle metadata,   -->
+  <!--  which should be used instead. Do not delete the following line which   -->
+  <!--  is to indicate to Gradle or any Gradle module metadata file consumer   -->
+  <!--  that they should prefer consuming it instead.  -->
+  <!--  do_not_remove: published-with-gradle-metadata  -->
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>$GROUP_ID</groupId>
+  <artifactId>$ARTIFACT_NAME</artifactId>
+  <version>$VERSION</version>
+  <packaging>$packaging_type</packaging>
+  <name>$PROJECT_NAME</name>
+  <description>$PROJECT_DESCRIPTION</description>
+  <url>$PROJECT_URL</url>
+  <inceptionYear>$INCEPTION_YEAR</inceptionYear>
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>http://www.apache.org/licenses/LICENSE-2.0.txt</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>$(echo "$DEVELOPER_EMAIL" | cut -d@ -f1)</id>
+      <name>$DEVELOPER_NAME</name>
+      <url>$(echo "$PROJECT_URL" | sed 's|/[^/]*$||')</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>$scm_connection</connection>
+    <developerConnection>$scm_developer_connection</developerConnection>
     <url>$PROJECT_URL</url>
+  </scm>
+EOF
 
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+#    # Добавляем зависимости если есть файл
+#    local dependencies_file="${DEPENDENCIES:-./dependencies.xml}"
+#    if [ -f "$dependencies_file" ]; then
+#        log_info "Добавление зависимостей из файла: $dependencies_file"
+#        if grep -q '<dependency>' "$dependencies_file"; then
+#            echo "<dependencies>" >> "$POM_FILE"
+#            cat "$dependencies_file" >> "$POM_FILE"
+#            echo "</dependencies>" >> "$POM_FILE"
+#        else
+#            log_warning "Файл $dependencies_file не содержит зависимостей"
+#        fi
+#    fi
 
-    <developers>
-        <developer>
-            <name>$DEVELOPER_NAME</name>
-            <email>$DEVELOPER_EMAIL</email>
-            <organization>$ORGANIZATION</organization>
-            <organizationUrl>$ORGANIZATION_URL</organizationUrl>
-        </developer>
-    </developers>
-
-    <scm>
-        <connection>scm:git:git://$(echo $SCM_URL | sed 's/https:\/\///')</connection>
-        <developerConnection>scm:git:ssh://$(echo $SCM_URL | sed 's/https:\/\///' | sed 's/github.com/git@github.com/')</developerConnection>
-        <url>$PROJECT_URL</url>
-        <tag>$VERSION</tag>
-    </scm>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <sources.package>$SOURCES_PACKAGE</sources.package>
-    </properties>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>$REPOSITORY_ID</id>
-            <url>https://central.sonatype.com/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>$REPOSITORY_ID</id>
-            <url>https://central.sonatype.com/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
+    # Завершаем файл
+    cat >> "$POM_FILE" << EOF
 </project>
 EOF
 
     log_success "Создан файл: $pom_filename"
+    log_info "Тип упаковки: $packaging_type"
 }
 
 generate_settings_xml() {

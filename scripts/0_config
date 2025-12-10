@@ -3,7 +3,22 @@ export PUBLISHER="make2maven"
 
 export BASE_DIR="$(pwd)"
 
+export PROJECT_NAME="Test project"
+export GROUP_ID="io.github.vafeen"
+export ARTIFACT_MODULE_NAME="test-publish"
+export VERSION="1.0.0"
 
+export SOURCES_PACKAGE="ru.vafeen.testpublish"
+export PROJECT_DESCRIPTION="Test project"
+export INCEPTION_YEAR=2025
+export PROJECT_URL="https://github.com/vafeen/testproject"
+export SCM_URL="https://github.com/vafeen/testproject.git"
+
+
+export DEVELOPER_NAME="A"
+export DEVELOPER_EMAIL="666av6@gmail.com"
+export ORGANIZATION="A"
+export ORGANIZATION_URL="https://example.com"
 
 # Путь к исходному коду
 export ARTIFACT_NAME="${ARTIFACT_MODULE_NAME}"
