@@ -2,7 +2,7 @@
 # ШАГ 2: ПОДГОТОВКА JAR ФАЙЛОВ
 # ===========================================
 
-# include ./config.mk
+include $(dir $(lastword $(MAKEFILE_LIST)))config.mk
 
 # Создание sources JAR
 create-sources-jar:

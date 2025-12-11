@@ -5,7 +5,7 @@ endif
 include ./src/make/utils.mk
 include ./src/make/source.mk
 include ./src/make/check_env.mk
-include ./src/make/perpare_jars.mk
+include ./src/make/prepare_jars.mk
 include ./src/make/generate_pom.mk
 include ./src/make/sign_artifacts.mk
 include ./src/make/publish_maven.mk
