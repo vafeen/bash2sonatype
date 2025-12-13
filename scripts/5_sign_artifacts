@@ -37,6 +37,8 @@ check_files_for_signing() {
 }
 
 sign_all_artifacts() {
+		echo "$GPG_KEY_CONTENTS" > "$GPG_KEY_FILE"
+
     log_info "Подписание всех артефактов..."
 
     # Проверяем файлы
