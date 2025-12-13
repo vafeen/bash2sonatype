@@ -82,7 +82,7 @@ publish_to_sonatype_central() {
 show_publication_success() {
     echo ""
     echo "Артефакты опубликованы:"
-    echo "  • $FINAL_JAR"
+    echo "  • $FINAL_LIB_FILE"
     echo "  • $SOURCES_JAR"
     echo "  • $JAVADOC_JAR"
     echo ""
@@ -118,7 +118,7 @@ cleanup_after_publication() {
     fi
 
     # Удаляем подписи
-    if rm -f "${FINAL_JAR}.asc" "${SOURCES_JAR}.asc" "${JAVADOC_JAR}.asc" "${POM_FILE}.asc" 2>/dev/null; then
+    if rm -f "${FINAL_LIB_FILE}.asc" "${SOURCES_JAR}.asc" "${JAVADOC_JAR}.asc" "${POM_FILE}.asc" 2>/dev/null; then
         log_success "Подписи удалены"
     else
         log_error "Ошибка удаления подписей"

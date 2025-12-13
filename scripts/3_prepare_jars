@@ -158,20 +158,20 @@ EOF
 }
 
 check_main_jar() {
-    log_info "Проверка основного JAR файла $FINAL_JAR..."
-    if [ -f "$FINAL_JAR" ]; then
-        log_success "Найден JAR файл: $FINAL_JAR"
+    log_info "Проверка основного JAR файла $FINAL_LIB_FILE..."
+    if [ -f "$FINAL_LIB_FILE" ]; then
+        log_success "Найден JAR файл: $FINAL_LIB_FILE"
 
         # Проверяем, что JAR файл валидный
         log_info "Проверка JAR файла..."
-        if jar tf "$FINAL_JAR" &>/dev/null; then
+        if jar tf "$FINAL_LIB_FILE" &>/dev/null; then
             log_success "JAR файл валиден"
         else
             log_error "JAR файл поврежден или не является архивом"
             exit 1
         fi
     else
-        log_error "Основной JAR файл не найден: $FINAL_JAR"
+        log_error "Основной JAR файл не найден: $FINAL_LIB_FILE"
         echo ""
         echo "Убедитесь что файл существует в директории директории"
         echo ""
@@ -221,7 +221,7 @@ show_jars_info() {
     echo ""
 
     # Показываем информацию о файлах
-    for jar_file in "$FINAL_JAR" "$SOURCES_JAR" "$JAVADOC_JAR"; do
+    for jar_file in "$FINAL_LIB_FILE" "$SOURCES_JAR" "$JAVADOC_JAR"; do
         if [ -f "$jar_file" ]; then
             file_size=$(ls -lh "$jar_file" | awk '{print $5}')
             echo "  ✓ $(basename "$jar_file") ($file_size)"

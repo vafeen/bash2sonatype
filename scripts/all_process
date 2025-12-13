@@ -9,8 +9,9 @@ source ./bash2sonatype/scripts/load_all
 log_step "1: Подготовка окружения"
 create_work_dir
 
-log_step "2: Копирование целевого файла"
-cp $ASSEMBLED_FILE ./bash2sonatype/build/
+log_step "2: Сборка проекта"
+# bash ./gradlew build
+cp $ASSEMBLED_FILE $FINAL_LIB_FILE
 
 log_step "3: Проверки окружения"
 check_configuration
@@ -42,7 +43,7 @@ create_maven_directory_structure
 
 
 # Копируем все артефакты
-move_all_artifacts_to_maven_structure
+copy_all_artifacts_to_maven_structure
 
 log_step "9: Проверка структуры"
 verify_maven_structure

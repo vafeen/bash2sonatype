@@ -4,8 +4,17 @@ export PUBLISHER="bash2sonatype"
 export BASE_DIR="$(pwd)"
 export BUILD_DIR="$BASE_DIR/$PUBLISHER/build"
 export ARTIFACT_PREFIX="$ARTIFACT_NAME-$VERSION"
+
+export PACKAGING_TYPE="jar"
+if [[ "$ASSEMBLED_FILE" == *.aar ]]; then
+    export PACKAGING_TYPE="aar"
+    log_info "Определен тип упаковки: aar"
+else
+    log_info "Определен тип упаковки: jar"
+fi
+
 # Имена файлов
-export FINAL_JAR="$BUILD_DIR/$ARTIFACT_PREFIX.jar"
+export FINAL_LIB_FILE="$BUILD_DIR/$ARTIFACT_PREFIX.$PACKAGING_TYPE"
 export SOURCES_JAR="$BUILD_DIR/$ARTIFACT_PREFIX-sources.jar"
 export JAVADOC_JAR="$BUILD_DIR/$ARTIFACT_PREFIX-javadoc.jar"
 export POM_FILE="$BUILD_DIR/$ARTIFACT_PREFIX.pom"
@@ -26,7 +35,7 @@ check_config() {
     echo "Group ID: $GROUP_ID"
     echo "Artifact/Module Name: $ARTIFACT_NAME"
     echo "Version: $VERSION"
-    echo "Final JAR: $(basename "$FINAL_JAR")"
+    echo "Final JAR: $(basename "$FINAL_LIB_FILE")"
     echo "Sources JAR: $(basename "$SOURCES_JAR")"
     echo "Javadoc JAR: $(basename "$JAVADOC_JAR")"
     echo "POM File: $(basename "$POM_FILE")"
