@@ -12,7 +12,7 @@ check_files_for_signing() {
     log_info "Проверка файлов для подписи..."
 
     required_files=(
-        "$FINAL_JAR"
+        "$FINAL_LIB_FILE"
         "$SOURCES_JAR"
         "$JAVADOC_JAR"
         "$POM_FILE"
@@ -75,7 +75,7 @@ sign_all_artifacts() {
     log_success "Ключ импортирован, ID: ${key_id: -8}"
 
     # Подписываем файлы
-    local files=("$FINAL_JAR" "$SOURCES_JAR" "$JAVADOC_JAR" "$POM_FILE")
+    local files=("$FINAL_LIB_FILE" "$SOURCES_JAR" "$JAVADOC_JAR" "$POM_FILE")
     local success_count=0
     
     echo ""
@@ -133,7 +133,7 @@ verify_signatures() {
     log_info "Проверка подписей..."
 
     local files=(
-        "$FINAL_JAR"
+        "$FINAL_LIB_FILE"
         "$SOURCES_JAR"
         "$JAVADOC_JAR"
         "$POM_FILE"
@@ -163,31 +163,31 @@ verify_signatures() {
 }
 
 
-move_all_artifacts_to_maven_structure() {
+copy_all_artifacts_to_maven_structure() {
     log_info "Копирование ВСЕХ артефактов в Maven структуру..."
 
     # ВСЕ файлы
     local all_files=(
         # Основные файлы
-        "$FINAL_JAR"
+        "$FINAL_LIB_FILE"
         "$SOURCES_JAR"
         "$JAVADOC_JAR"
         "$POM_FILE"
         
         # Подписи
-        "$FINAL_JAR.asc"
+        "$FINAL_LIB_FILE.asc"
         "$SOURCES_JAR.asc"
         "$JAVADOC_JAR.asc"
         "$POM_FILE.asc"
         
         # Checksums md5 
-        "$FINAL_JAR.md5"
+        "$FINAL_LIB_FILE.md5"
         "$SOURCES_JAR.md5"
         "$JAVADOC_JAR.md5"
         "$POM_FILE.md5"
 
         # Checksums sha1
-        "$FINAL_JAR.sha1"
+        "$FINAL_LIB_FILE.sha1"
         "$SOURCES_JAR.sha1"
         "$JAVADOC_JAR.sha1"
         "$POM_FILE.sha1"
@@ -201,7 +201,7 @@ move_all_artifacts_to_maven_structure() {
     for file in "${all_files[@]}"; do
         local source_file="$file"
         if [ -f "$source_file" ]; then
-            mv "$source_file" "$MAVEN_DIR/"
+            cp "$source_file" "$MAVEN_DIR/"
             echo "  ✓ $file"
             ((copied_count++))
         else
@@ -227,25 +227,25 @@ verify_maven_structure() {
 
     local required_files=(
         # Основные файлы
-        "$FINAL_JAR"
+        "$FINAL_LIB_FILE"
         "$SOURCES_JAR"
         "$JAVADOC_JAR"
         "$POM_FILE"
         
         # Подписи
-        "$FINAL_JAR.asc"
+        "$FINAL_LIB_FILE.asc"
         "$SOURCES_JAR.asc"
         "$JAVADOC_JAR.asc"
         "$POM_FILE.asc"
         
         # Checksums md5 
-        "$FINAL_JAR.md5"
+        "$FINAL_LIB_FILE.md5"
         "$SOURCES_JAR.md5"
         "$JAVADOC_JAR.md5"
         "$POM_FILE.md5"
 
         # Checksums sha1
-        "$FINAL_JAR.sha1"
+        "$FINAL_LIB_FILE.sha1"
         "$SOURCES_JAR.sha1"
         "$JAVADOC_JAR.sha1"
         "$POM_FILE.sha1"

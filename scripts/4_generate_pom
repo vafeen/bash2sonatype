@@ -15,14 +15,8 @@ generate_pom_xml() {
     local scm_connection
     local scm_developer_connection
 
-    # Определяем тип упаковки по расширению FINAL_JAR
-    local packaging_type="jar"
-    if [[ "$FINAL_JAR" == *.aar ]]; then
-        packaging_type="aar"
-        log_info "Определен тип упаковки: aar"
-    else
-        log_info "Определен тип упаковки: jar"
-    fi
+    # Определяем тип упаковки по расширению FINAL_LIB_FILE
+    
 
     # Парсим SCM URL
     if [[ "$SCM_URL" == https://github.com/* ]]; then
@@ -49,7 +43,7 @@ generate_pom_xml() {
   <groupId>$GROUP_ID</groupId>
   <artifactId>$ARTIFACT_NAME</artifactId>
   <version>$VERSION</version>
-  <packaging>$packaging_type</packaging>
+  <packaging>$PACKAGING_TYPE</packaging>
   <name>$PROJECT_NAME</name>
   <description>$PROJECT_DESCRIPTION</description>
   <url>$PROJECT_URL</url>
@@ -94,7 +88,7 @@ EOF
 EOF
 
     log_success "Создан файл: $POM_FILE"
-    log_info "Тип упаковки: $packaging_type"
+    log_info "Тип упаковки: $PACKAGING_TYPE"
 }
 
 generate_settings_xml() {
@@ -205,7 +199,7 @@ generate_checksums_in_build_dir() {
 
     # Только основные файлы (без .asc)
     local main_files=(
-        "${FINAL_JAR}"
+        "${FINAL_LIB_FILE}"
         "${SOURCES_JAR}"
         "${JAVADOC_JAR}"
         "${POM_FILE}"
