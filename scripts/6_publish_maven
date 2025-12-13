@@ -63,8 +63,10 @@ check_files_for_publication() {
 }
 
 publish_to_sonatype_central() {
+    local autopublish="${1:-false}"
+    
     log_info "Загрузка в Sonatype Central..."
-
+    
     # Создаем токен авторизации
     local token=$(echo -n "$SONATYPE_USERNAME:$SONATYPE_PASSWORD" | base64)
 
@@ -73,54 +75,41 @@ publish_to_sonatype_central() {
         return 1
     fi
 
-    log_info "Отправка bundle через Sonatype Central API..."
-
-    echo "Используемый файл: $BUNDLE_ZIP"
-    echo "Размер файла: $(ls -lh "$BUNDLE_ZIP" | awk '{print $5}')"
+    # Определяем тип публикации
+    local publishing_type="USER_MANAGED"
+    [ "$autopublish" = "true" ] && publishing_type="AUTOMATIC"
     
-    # Сохраняем ответ для анализа
-    local response_file="$BUILD_DIR/upload_response.txt"
-    
-    # Загружаем bundle с выводом подробной информации
-    echo "Выполняю запрос к Sonatype Central..."
-    echo "URL: https://central.sonatype.com/api/v1/publisher/upload"
-    echo ""
-    
-    local http_code=$(curl --request POST \
+    # Загружаем bundle
+    local response
+    response=$(curl --request POST \
         --silent \
         --show-error \
         --write-out "HTTP_STATUS:%{http_code}" \
         --header "Authorization: Bearer $token" \
-        --header "User-Agent: Maven-Publisher/1.0" \
         --form "bundle=@$BUNDLE_ZIP" \
-        --output "$response_file" \
-        https://central.sonatype.com/api/v1/publisher/upload)
+        --form "publishingType=$publishing_type" \
+        --form "name=${ARTIFACT_PREFIX}" \
+        https://central.sonatype.com/api/v1/publisher/upload 2>&1)
     
     local exit_code=$?
-    
-    # Извлекаем HTTP статус
-    local http_status=$(echo "$http_code" | grep -o "HTTP_STATUS:[0-9]*" | cut -d: -f2)
-    
-    echo ""
-    echo "Результат запроса:"
-    echo "Код выхода curl: $exit_code"
-    echo "HTTP статус: $http_status"
-    
-    # Показываем ответ сервера
-    if [ -f "$response_file" ] && [ -s "$response_file" ]; then
-        echo ""
-        echo "Ответ сервера:"
-        cat "$response_file"
-        echo ""
-    fi
-    
-    # Проверяем результат
-    if [ $exit_code -eq 0 ] && [ "$http_status" = "200" ] || [ "$http_status" = "201" ]; then
-        log_success "✅ Bundle успешно загружен в Sonatype Central"
-        rm -f "$response_file" 2>/dev/null
+    local http_status=$(echo "$response" | grep -o "HTTP_STATUS:[0-9]*" | cut -d: -f2)
+    local body=$(echo "$response" | sed 's/HTTP_STATUS:[0-9]*//')
+
+    if [ $exit_code -eq 0 ] && { [ "$http_status" = "200" ] || [ "$http_status" = "201" ]; }; then
+        log_success "✅ Bundle успешно загружен"
+        echo "Deployment ID: $body"
+        
+        if [ "$autopublish" = "true" ]; then
+            log_info "Автоматическая публикация запущена"
+        else
+            log_info "Требуется ручная публикация через UI"
+        fi
+        
         return 0
     else
-        log_error "❌ Ошибка загрузки bundle"
+        log_error "❌ Ошибка загрузки: HTTP $http_status"
+        echo "$body"
+        return 1
     fi
 }
 
@@ -181,28 +170,6 @@ cleanup_after_publication() {
     return 0
 }
 
-perform_publication() {
-    log_info "Начало публикации..."
-
-    # Публикуем
-    if publish_to_maven; then
-        # Показываем успех
-        show_publication_success
-
-#        # Очищаем временные файлы
-#        if cleanup_after_publication; then
-#            log_success "Процесс публикации завершен"
-#            return 0
-#        else
-#            log_error "Ошибка при очистке"
-#            return 1
-#        fi
-    else
-        # Показываем ошибку
-        show_publication_error
-        return 1
-    fi
-}
 
 # ===========================================
 # ОСНОВНОЙ ВЫЗОВ ФУНКЦИЙ
