@@ -21,7 +21,7 @@ install_utils() {
         build-essential
 
     echo "3. Установка Java..."
-    apt install -y openjdk-17-jdk
+    apt install -y openjdk-21-jdk
 
     echo "4. Установка GPG..."
     apt install -y \
