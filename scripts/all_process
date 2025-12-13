@@ -45,7 +45,7 @@ create_maven_directory_structure
 
 
 # Копируем все артефакты
-copy_all_artifacts_to_maven_structure
+move_all_artifacts_to_maven_structure
 
 log_step "9: Проверка структуры"
 verify_maven_structure

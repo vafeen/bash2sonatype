@@ -163,7 +163,7 @@ verify_signatures() {
 }
 
 
-copy_all_artifacts_to_maven_structure() {
+move_all_artifacts_to_maven_structure() {
     log_info "Копирование ВСЕХ артефактов в Maven структуру..."
 
     # ВСЕ файлы
@@ -201,7 +201,7 @@ copy_all_artifacts_to_maven_structure() {
     for file in "${all_files[@]}"; do
         local source_file="$file"
         if [ -f "$source_file" ]; then
-            cp "$source_file" "$MAVEN_DIR/"
+            mv "$source_file" "$MAVEN_DIR/"
             echo "  ✓ $file"
             ((copied_count++))
         else
