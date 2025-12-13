@@ -11,10 +11,6 @@
 generate_pom_xml() {
     log_info "Создание pom.xml..."
 
-    # Определяем имя файла в формате artifactModuleName-version.pom
-    local pom_filename="${ARTIFACT_NAME}-${VERSION}.pom"
-    export POM_FILE="$BUILD_DIR/$pom_filename"
-
     # Парсим SCM URL для connection
     local scm_connection
     local scm_developer_connection
@@ -97,7 +93,7 @@ EOF
 </project>
 EOF
 
-    log_success "Создан файл: $pom_filename"
+    log_success "Создан файл: $POM_FILE"
     log_info "Тип упаковки: $packaging_type"
 }
 
@@ -143,7 +139,7 @@ create_maven_directory_structure() {
 
     mkdir -p "$MAVEN_DIR"
 
-    log_success "Создана структура: $maven_path/$ARTIFACT_NAME/$VERSION"
+    log_success "Создана структура: $MAVEN_DIR"
 }
 
 

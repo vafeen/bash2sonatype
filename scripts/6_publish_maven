@@ -28,40 +28,6 @@ confirm_publication() {
     fi
 }
 
-check_files_for_publication() {
-    log_info "Проверка файлов для публикации..."
-
-    required_files=(
-        "$FINAL_JAR"
-        "$SOURCES_JAR"
-        "$JAVADOC_JAR"
-        "$POM_FILE"
-        "${FINAL_JAR}.asc"
-        "${SOURCES_JAR}.asc"
-        "${JAVADOC_JAR}.asc"
-        "${POM_FILE}.asc"
-        "$SETTINGS_FILE"
-    )
-
-    local all_found=true
-
-    for file in "${required_files[@]}"; do
-        if [ -f "$file" ]; then
-            log_success "Файл найден: $(basename "$file")"
-        else
-            log_error "Файл не найден: $(basename "$file")"
-            all_found=false
-        fi
-    done
-
-    if [ "$all_found" = false ]; then
-        log_error "Не все файлы найдены для публикации"
-        return 1
-    else
-        return 0
-    fi
-}
-
 publish_to_sonatype_central() {
     local autopublish="${1:-false}"
     
