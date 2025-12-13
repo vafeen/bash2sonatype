@@ -147,61 +147,61 @@ create_maven_directory_structure() {
 }
 
 
-copy_artifacts_to_maven_structure() {
-    log_info "Копирование ВСЕХ артефактов в Maven структуру..."
+# copy_artifacts_to_maven_structure() {
+#     log_info "Копирование ВСЕХ артефактов в Maven структуру..."
 
-    local artifact_base="${ARTIFACT_NAME}-${VERSION}"
+#     local artifact_base="${ARTIFACT_NAME}-${VERSION}"
     
-    # ВСЕ файлы
-    local all_files=(
-        # Основные файлы
-        "${artifact_base}.jar"
-        "${artifact_base}-sources.jar"
-        "${artifact_base}-javadoc.jar"
-        "${artifact_base}.pom"
+#     # ВСЕ файлы
+#     local all_files=(
+#         # Основные файлы
+#         "${artifact_base}.jar"
+#         "${artifact_base}-sources.jar"
+#         "${artifact_base}-javadoc.jar"
+#         "${artifact_base}.pom"
         
-        # Подписи
-        "${artifact_base}.jar.asc"
-        "${artifact_base}-sources.jar.asc"
-        "${artifact_base}-javadoc.jar.asc"
-        "${artifact_base}.pom.asc"
+#         # Подписи
+#         "${artifact_base}.jar.asc"
+#         "${artifact_base}-sources.jar.asc"
+#         "${artifact_base}-javadoc.jar.asc"
+#         "${artifact_base}.pom.asc"
         
-        # Checksums
-        "${artifact_base}.jar.md5"
-        "${artifact_base}.jar.sha1"
-        "${artifact_base}-sources.jar.md5"
-        "${artifact_base}-sources.jar.sha1"
-        "${artifact_base}-javadoc.jar.md5"
-        "${artifact_base}-javadoc.jar.sha1"
-        "${artifact_base}.pom.md5"
-        "${artifact_base}.pom.sha1"
-    )
+#         # Checksums
+#         "${artifact_base}.jar.md5"
+#         "${artifact_base}.jar.sha1"
+#         "${artifact_base}-sources.jar.md5"
+#         "${artifact_base}-sources.jar.sha1"
+#         "${artifact_base}-javadoc.jar.md5"
+#         "${artifact_base}-javadoc.jar.sha1"
+#         "${artifact_base}.pom.md5"
+#         "${artifact_base}.pom.sha1"
+#     )
     
-    echo "Копирование:"
-    echo "-----------"
+#     echo "Копирование:"
+#     echo "-----------"
     
-    local copied_count=0
+#     local copied_count=0
     
-    for file in "${all_files[@]}"; do
-        local source_file="$BUILD_DIR/$file"
-        if [ -f "$source_file" ]; then
-            cp "$source_file" "$MAVEN_DIR/"
-            echo "  ✓ $file"
-            ((copied_count++))
-        else
-            echo "  ✗ $file (не найден)"
-        fi
-    done
+#     for file in "${all_files[@]}"; do
+#         local source_file="$BUILD_DIR/$file"
+#         if [ -f "$source_file" ]; then
+#             cp "$source_file" "$MAVEN_DIR/"
+#             echo "  ✓ $file"
+#             ((copied_count++))
+#         else
+#             echo "  ✗ $file (не найден)"
+#         fi
+#     done
 
-    echo ""
-    if [ $copied_count -eq ${#all_files[@]} ]; then
-        log_success "Все ${#all_files[@]} файлов скопированы"
-        return 0
-    else
-        log_error "Скопированы только $copied_count из ${#all_files[@]} файлов"
-        return 1
-    fi
-}
+#     echo ""
+#     if [ $copied_count -eq ${#all_files[@]} ]; then
+#         log_success "Все ${#all_files[@]} файлов скопированы"
+#         return 0
+#     else
+#         log_error "Скопированы только $copied_count из ${#all_files[@]} файлов"
+#         return 1
+#     fi
+# }
 
 
 generate_checksums_in_build_dir() {
@@ -270,8 +270,13 @@ create_bundle_tar() {
         return 1
     fi
 
-    # Архивируем содержимое MAVEN_REPO_DIR (без самого имени maven-repo в путях)
-    if tar -czf "$BUNDLE_ZIP" -C "$MAVEN_REPO_DIR" . > /dev/null 2>&1; then
+    # Создаём архив с правильной структурой
+    # Вычисляем относительный путь от MAVEN_DIR до корня репозитория
+    local repo_root="$MAVEN_REPO_DIR"
+    local relative_path="${MAVEN_DIR#$repo_root/}"
+    
+    # Создаём архив с сохранением относительных путей
+    if tar -czf "$BUNDLE_ZIP" -C "$repo_root" "$relative_path" > /dev/null 2>&1; then
         local size=$(ls -lh "$BUNDLE_ZIP" | awk '{print $5}')
         log_success "Создан bundle: $BUNDLE_ZIP ($size)"
         
@@ -287,7 +292,6 @@ create_bundle_tar() {
         return 1
     fi
 }
-
 
 # ===========================================
 # ОСНОВНОЙ ВЫЗОВ ФУНКЦИЙ
