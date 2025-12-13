@@ -1,4 +1,7 @@
 #!/bin/bash
+
+export TOKEN=$(echo "$SONATYPE_USERNAME:$SONATYPE_PASSWORD" | base64)
+export GPG_KEY_FILE="private_key.asc"
 export PUBLISHER="bash2sonatype"
 
 export BASE_DIR="$(pwd)"
