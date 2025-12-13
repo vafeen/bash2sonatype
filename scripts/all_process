@@ -4,8 +4,6 @@
 # ПОЛНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ ПУБЛИКАЦИИ
 # ===========================================
 
-# Загружаем все функции
-rm -rf ./bash2sonatype/build
 source ./bash2sonatype/scripts/load_all
 
 log_step "1: Подготовка окружения"
@@ -13,7 +11,7 @@ create_work_dir
 
 log_step "2: Сборка проекта"
 # bash ./gradlew build
-cp ./$ARTIFACT_MODULE_NAME/build/libs/$ARTIFACT_MODULE_NAME-$VERSION.jar ./bash2sonatype/build/$ARTIFACT_PREFIX.jar
+cp $ASSEMBLED_FILE ./bash2sonatype/build/
 
 log_step "3: Проверки окружения"
 check_configuration

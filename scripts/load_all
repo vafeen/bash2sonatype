@@ -24,7 +24,6 @@ load_functions_from_file() {
 echo ""
 echo "Загрузка функций..."
 
-load_functions_from_file "$SCRIPT_DIR/.sensitive"
 load_functions_from_file "$SCRIPT_DIR/0_config"
 load_functions_from_file "$SCRIPT_DIR/1_utils"
 load_functions_from_file "$SCRIPT_DIR/2_check_env"
