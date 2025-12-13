@@ -1,5 +1,5 @@
 #!/bin/bash
-export PUBLISHER="make2maven"
+export PUBLISHER="bash2sonatype"
 
 export BASE_DIR="$(pwd)"
 

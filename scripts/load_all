@@ -3,7 +3,7 @@
 # ЗАГРУЗКА ВСЕХ СКРИПТОВ И ФУНКЦИЙ
 # ===========================================
 
-export BASE_DIR=$(pwd)/make2maven
+export BASE_DIR=$(pwd)/bash2sonatype
 export SCRIPT_DIR="${BASE_DIR}/scripts"
 
 echo "Текущая директория: $SCRIPT_DIR"
@@ -24,8 +24,7 @@ load_functions_from_file() {
 echo ""
 echo "Загрузка функций..."
 
-# Порядок важен! Функции могут зависеть друг от друга
-load_functions_from_file "$SCRIPT_DIR/sensitive"
+load_functions_from_file "$SCRIPT_DIR/.sensitive"
 load_functions_from_file "$SCRIPT_DIR/0_config"
 load_functions_from_file "$SCRIPT_DIR/1_utils"
 load_functions_from_file "$SCRIPT_DIR/2_check_env"
