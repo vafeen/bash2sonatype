@@ -1,9 +1,51 @@
 #!/bin/bash
 
-sudo apt update -y
-sudo apt install -y \
-	g++ \
-	build-essential \
-	cmake \
-	git \
-	pkg-config
+install_utils() {
+    echo "=== УСТАНОВКА УТИЛИТ ==="
+    
+    export DEBIAN_FRONTEND=noninteractive
+    export TZ=Europe/Moscow
+    
+    echo "1. Обновление пакетов..."
+    apt update
+    apt upgrade -y
+
+    echo "2. Установка базовых утилит..."
+    apt install -y \
+        curl \
+        wget \
+        git \
+        unzip \
+        software-properties-common \
+        ca-certificates \
+        build-essential
+
+    echo "3. Установка Java..."
+    apt install -y openjdk-17-jdk
+
+    echo "4. Установка GPG..."
+    apt install -y \
+        gnupg \
+        gnupg-agent \
+        gpg \
+        gpgconf \
+        pinentry-curses
+
+    echo "5. Настройка GPG..."
+    mkdir -p ~/.gnupg
+    chmod 700 ~/.gnupg
+
+    cat > ~/.gnupg/gpg-agent.conf << 'EOF'
+pinentry-program /usr/bin/pinentry-curses
+default-cache-ttl 600
+max-cache-ttl 7200
+EOF
+
+    echo "=== УСТАНОВКА ЗАВЕРШЕНА ==="
+    echo ""
+    echo "Проверка установки:"
+    echo "Java: $(java -version 2>&1 | head -1)"
+    echo "GPG: $(gpg --version | head -1)"
+}
+
+install_utils

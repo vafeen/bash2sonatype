@@ -1,0 +1,57 @@
+#!/bin/bash
+
+remove_utils() {
+    echo "=== УДАЛЕНИЕ УТИЛИТ ==="
+    
+    # Удаление Java
+    echo "1. Удаление Java..."
+    apt remove --purge -y openjdk-17-jdk
+    
+    # Удаление Maven
+    echo "2. Удаление Maven..."
+    apt remove --purge -y maven
+    
+    # Удаление GPG и связанных пакетов
+    echo "3. Удаление GPG..."
+    apt remove --purge -y \
+        gnupg \
+        gnupg-agent \
+        gpg \
+        gpgconf \
+        pinentry-curses
+    
+    # Удаление базовых утилит
+    echo "4. Удаление базовых утилит..."
+    apt remove --purge -y \
+        curl \
+        wget \
+        git \
+        unzip \
+        software-properties-common \
+        ca-certificates \
+        build-essential
+    
+    # Автоудаление неиспользуемых зависимостей
+    echo "5. Очистка зависимостей..."
+    apt autoremove -y
+    apt autoclean -y
+    
+    # Очистка конфигурационных файлов
+    echo "6. Очистка конфигурационных файлов..."
+    rm -rf ~/.gnupg
+    rm -rf ~/.m2
+    rm -rf ~/.gradle
+    
+    # Очистка кэша APT
+    rm -rf /var/cache/apt/archives/*
+    rm -rf /var/lib/apt/lists/*
+    
+    echo "=== УДАЛЕНИЕ ЗАВЕРШЕНО ==="
+    echo ""
+    echo "Проверка удаления:"
+    echo "Java: $(which java 2>/dev/null || echo 'удален')"
+    echo "Maven: $(which mvn 2>/dev/null || echo 'удален')"
+    echo "GPG: $(which gpg 2>/dev/null || echo 'удален')"
+}
+
+remove_utils

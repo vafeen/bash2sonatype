@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# ===========================================
+# ШАГ 1: ПРОВЕРКА ОКРУЖЕНИЯ И ЗАВИСИМОСТЕЙ
+# ===========================================
+
+# ===========================================
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+# ===========================================
+
+check_configuration() {
+    log_info "Проверка конфигурации..."
+    if check_required_vars; then
+        log_success "Конфигурация найдена"
+        return 0
+    else
+        log_error "Конфигурация не найдена"
+        return 1
+    fi
+}
+
+check_required_commands() {
+    log_info "Проверка установленных программ..."
+
+    local REQUIRED_COMMANDS=("java" "gpg" "jar")
+    local all_found=true
+
+    for cmd in "${REQUIRED_COMMANDS[@]}"; do
+        if command -v "$cmd" &> /dev/null; then
+            log_success "Команда '$cmd' найдена"
+        else
+            log_error "Команда '$cmd' не найдена"
+            all_found=false
+        fi
+    done
+
+    if [ "$all_found" = true ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_src() {
+    log_info "Проверка директории с исходным кодом..."
+
+    if [ -n "$SOURCE_CODE_PATH" ] && [ -d "$SOURCE_CODE_PATH" ]; then
+        log_success "Директория с исходниками найдена"
+        return 0
+    else
+        log_error "Директория с исходниками не найдена"
+        return 1
+    fi
+}
+
+
+#check_gpg_environment() {
+#    log_info "Проверка GPG ключа..."
+#
+#    if gpg --list-keys "$GPG_KEY_ID" &>/dev/null; then
+#        log_success "GPG ключ найден"
+#        return 0
+#    else
+#        log_error "GPG ключ не найден"
+#        return 1
+#    fi
+#}
+
+# ===========================================
+# ОСНОВНОЙ ВЫЗОВ ФУНКЦИЙ
+# ===========================================
+
+#log_step "1: Проверка окружения"
+#
+## Выполняем все проверки
+#check_configuration
+#check_required_commands
+#check_jar
+#check_src
+#check_gpg_environment
+#
+#log_success "Проверка окружения завершена"

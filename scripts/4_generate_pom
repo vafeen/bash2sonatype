@@ -1,0 +1,303 @@
+#!/bin/bash
+
+# ===========================================
+# ШАГ 3: СОЗДАНИЕ POM ФАЙЛА
+# ===========================================
+
+# ===========================================
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+# ===========================================
+
+generate_pom_xml() {
+    log_info "Создание pom.xml..."
+
+    # Определяем имя файла в формате artifactModuleName-version.pom
+    local pom_filename="${ARTIFACT_NAME}-${VERSION}.pom"
+    export POM_FILE="$BUILD_DIR/$pom_filename"
+
+    # Парсим SCM URL для connection
+    local scm_connection
+    local scm_developer_connection
+
+    # Определяем тип упаковки по расширению FINAL_JAR
+    local packaging_type="jar"
+    if [[ "$FINAL_JAR" == *.aar ]]; then
+        packaging_type="aar"
+        log_info "Определен тип упаковки: aar"
+    else
+        log_info "Определен тип упаковки: jar"
+    fi
+
+    # Парсим SCM URL
+    if [[ "$SCM_URL" == https://github.com/* ]]; then
+        local repo_path="${SCM_URL#https://github.com/}"
+        repo_path="${repo_path%.git}"
+        repo_path="${repo_path%/}"
+        scm_connection="scm:git:git://github.com/${repo_path}.git"
+        scm_developer_connection="scm:git:ssh://git@github.com/${repo_path}.git"
+    else
+        # Общий случай
+        scm_connection="scm:git:git://$(echo "$SCM_URL" | sed 's|https://||; s|http://||')"
+        scm_developer_connection="scm:git:ssh://$(echo "$SCM_URL" | sed 's|https://||; s|http::://' | sed 's|github.com|git@github.com|')"
+    fi
+
+    cat > "$POM_FILE" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <!--  This module was also published with a richer model, Gradle metadata,   -->
+  <!--  which should be used instead. Do not delete the following line which   -->
+  <!--  is to indicate to Gradle or any Gradle module metadata file consumer   -->
+  <!--  that they should prefer consuming it instead.  -->
+  <!--  do_not_remove: published-with-gradle-metadata  -->
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>$GROUP_ID</groupId>
+  <artifactId>$ARTIFACT_NAME</artifactId>
+  <version>$VERSION</version>
+  <packaging>$packaging_type</packaging>
+  <name>$PROJECT_NAME</name>
+  <description>$PROJECT_DESCRIPTION</description>
+  <url>$PROJECT_URL</url>
+  <inceptionYear>$INCEPTION_YEAR</inceptionYear>
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>http://www.apache.org/licenses/LICENSE-2.0.txt</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>$(echo "$DEVELOPER_EMAIL" | cut -d@ -f1)</id>
+      <name>$DEVELOPER_NAME</name>
+      <url>$(echo "$PROJECT_URL" | sed 's|/[^/]*$||')</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>$scm_connection</connection>
+    <developerConnection>$scm_developer_connection</developerConnection>
+    <url>$PROJECT_URL</url>
+  </scm>
+EOF
+
+#    # Добавляем зависимости если есть файл
+#    local dependencies_file="${DEPENDENCIES:-./dependencies.xml}"
+#    if [ -f "$dependencies_file" ]; then
+#        log_info "Добавление зависимостей из файла: $dependencies_file"
+#        if grep -q '<dependency>' "$dependencies_file"; then
+#            echo "<dependencies>" >> "$POM_FILE"
+#            cat "$dependencies_file" >> "$POM_FILE"
+#            echo "</dependencies>" >> "$POM_FILE"
+#        else
+#            log_warning "Файл $dependencies_file не содержит зависимостей"
+#        fi
+#    fi
+
+    # Завершаем файл
+    cat >> "$POM_FILE" << EOF
+</project>
+EOF
+
+    log_success "Создан файл: $pom_filename"
+    log_info "Тип упаковки: $packaging_type"
+}
+
+generate_settings_xml() {
+    log_info "Создание settings.xml..."
+
+    cat > "$SETTINGS_FILE" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+    <servers>
+        <server>
+            <id>$REPOSITORY_ID</id>
+            <username>$SONATYPE_USERNAME</username>
+            <password>$SONATYPE_PASSWORD</password>
+        </server>
+    </servers>
+
+    <profiles>
+        <profile>
+            <id>$REPOSITORY_ID</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <gpg.executable>gpg</gpg.executable>
+                <gpg.keyname>$GPG_KEY_ID</gpg.keyname>
+                <gpg.passphrase>$GPG_PASSPHRASE</gpg.passphrase>
+            </properties>
+        </profile>
+    </profiles>
+</settings>
+EOF
+
+    chmod 600 "$SETTINGS_FILE"
+    log_success "Создан settings.xml"
+}
+create_maven_directory_structure() {
+    log_info "Создание структуры каталогов Maven..."
+
+    mkdir -p "$MAVEN_DIR"
+
+    log_success "Создана структура: $maven_path/$ARTIFACT_NAME/$VERSION"
+}
+
+
+# copy_artifacts_to_maven_structure() {
+#     log_info "Копирование ВСЕХ артефактов в Maven структуру..."
+
+#     local artifact_base="${ARTIFACT_NAME}-${VERSION}"
+    
+#     # ВСЕ файлы
+#     local all_files=(
+#         # Основные файлы
+#         "${artifact_base}.jar"
+#         "${artifact_base}-sources.jar"
+#         "${artifact_base}-javadoc.jar"
+#         "${artifact_base}.pom"
+        
+#         # Подписи
+#         "${artifact_base}.jar.asc"
+#         "${artifact_base}-sources.jar.asc"
+#         "${artifact_base}-javadoc.jar.asc"
+#         "${artifact_base}.pom.asc"
+        
+#         # Checksums
+#         "${artifact_base}.jar.md5"
+#         "${artifact_base}.jar.sha1"
+#         "${artifact_base}-sources.jar.md5"
+#         "${artifact_base}-sources.jar.sha1"
+#         "${artifact_base}-javadoc.jar.md5"
+#         "${artifact_base}-javadoc.jar.sha1"
+#         "${artifact_base}.pom.md5"
+#         "${artifact_base}.pom.sha1"
+#     )
+    
+#     echo "Копирование:"
+#     echo "-----------"
+    
+#     local copied_count=0
+    
+#     for file in "${all_files[@]}"; do
+#         local source_file="$BUILD_DIR/$file"
+#         if [ -f "$source_file" ]; then
+#             cp "$source_file" "$MAVEN_DIR/"
+#             echo "  ✓ $file"
+#             ((copied_count++))
+#         else
+#             echo "  ✗ $file (не найден)"
+#         fi
+#     done
+
+#     echo ""
+#     if [ $copied_count -eq ${#all_files[@]} ]; then
+#         log_success "Все ${#all_files[@]} файлов скопированы"
+#         return 0
+#     else
+#         log_error "Скопированы только $copied_count из ${#all_files[@]} файлов"
+#         return 1
+#     fi
+# }
+
+
+generate_checksums_in_build_dir() {
+    log_info "Генерация контрольных сумм для основных файлов..."
+
+    # Только основные файлы (без .asc)
+    local main_files=(
+        "${FINAL_JAR}"
+        "${SOURCES_JAR}"
+        "${JAVADOC_JAR}"
+        "${POM_FILE}"
+    )
+    
+    echo "Генерация checksums (.md5 и .sha1):"
+    echo "----------------------------------"
+    
+    local generated_count=0
+    
+    for file in "${main_files[@]}"; do
+        if [ -f "$file" ]; then
+            # Получаем только имя файла для вывода
+            local filename=$(basename "$file")
+            echo -n "  $filename ... "
+            
+            # MD5
+            if md5sum "$file" | awk '{print $1}' > "${file}.md5"; then
+                echo -n "md5✓ "
+            else
+                echo "md5✗"
+                continue
+            fi
+            
+            # SHA1
+            if sha1sum "$file" | awk '{print $1}' > "${file}.sha1"; then
+                echo "sha1✓"
+                ((generated_count++))
+            else
+                echo "sha1✗"
+                rm -f "${file}.md5" 2>/dev/null
+            fi
+            
+        else
+            echo "  ✗ $(basename "$file") (не найден)"
+        fi
+    done
+
+    echo ""
+    echo "Созданные checksums:"
+    find "$BUILD_DIR" -name "*.md5" -o -name "*.sha1" | xargs ls -la 2>/dev/null | sort || echo "  Нет checksums файлов"
+    
+    if [ $generated_count -eq ${#main_files[@]} ]; then
+        log_success "Готово: созданы checksums для $generated_count файлов"
+        return 0
+    else
+        log_error "Проблема: созданы только для $generated_count из ${#main_files[@]} файлов"
+        return 1
+    fi
+}
+
+create_bundle_tar() {
+    log_info "Создание центрального bundle..."
+
+    # Проверяем, что исходная директория существует и не пуста
+    if [ ! -d "$MAVEN_REPO_DIR" ] || [ -z "$(ls -A "$MAVEN_REPO_DIR" 2>/dev/null)" ]; then
+        log_error "Директория Maven-репозитория отсутствует или пуста: $MAVEN_REPO_DIR"
+        return 1
+    fi
+
+    # Создаём архив с правильной структурой
+    # Вычисляем относительный путь от MAVEN_DIR до корня репозитория
+    local repo_root="$MAVEN_REPO_DIR"
+    local relative_path="${MAVEN_DIR#$repo_root/}"
+    
+    # Создаём архив с сохранением относительных путей
+    if tar -czf "$BUNDLE_ZIP" -C "$repo_root" "$relative_path" > /dev/null 2>&1; then
+        local size=$(ls -lh "$BUNDLE_ZIP" | awk '{print $5}')
+        log_success "Создан bundle: $BUNDLE_ZIP ($size)"
+        
+        echo
+        echo "Содержимое bundle TAR.GZ:"
+        echo "------------------------"
+        tar -tzf "$BUNDLE_ZIP" | head -20
+        echo "..."
+
+        return 0
+    else
+        log_error "Не удалось создать bundle TAR.GZ"
+        return 1
+    fi
+}
+
+# ===========================================
+# ОСНОВНОЙ ВЫЗОВ ФУНКЦИЙ
+# ===========================================
+
+
+# generate_pom_xml
+# generate_settings_xml
+# show_generated_files

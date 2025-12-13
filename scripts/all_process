@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# ===========================================
+# ПОЛНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ ПУБЛИКАЦИИ
+# ===========================================
+
+# Загружаем все функции
+rm -rf ./make2maven/build
+source ./make2maven/scripts/load_all
+
+log_step "1: Подготовка окружения"
+create_work_dir
+
+log_step "2: Сборка проекта"
+# bash ./gradlew build
+cp ./$ARTIFACT_MODULE_NAME/build/libs/$ARTIFACT_MODULE_NAME-$VERSION.jar ./make2maven/build/$ARTIFACT_PREFIX.jar
+
+log_step "3: Проверки окружения"
+check_configuration
+check_required_commands
+check_src
+
+log_step "4: Подготовка JAR файлов"
+check_main_jar
+check_sources_jar
+check_javadoc_jar
+show_jars_info
+
+log_step "5: Генерация POM и настроек"
+generate_pom_xml
+generate_settings_xml
+
+log_step "6: Подпись артефактов"
+check_files_for_signing
+sign_all_artifacts
+verify_signatures
+
+log_step "7: Генерация контрольных сумм"
+
+# Вызываем генерацию checksums
+generate_checksums_in_build_dir
+
+log_step "8: Создание Maven структуры"
+create_maven_directory_structure
+
+
+# Копируем все артефакты
+move_all_artifacts_to_maven_structure
+
+log_step "9: Проверка структуры"
+verify_maven_structure
+
+log_step "10: Создание bundle ZIP"
+create_bundle_tar
+
+
+publish_to_sonatype_central false
+
+#  log_step "13: Очистка"
+#  cleanup_work_dir
+
+log_success "Процесс публикации завершен!"

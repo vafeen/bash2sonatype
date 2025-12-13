@@ -1,0 +1,61 @@
+#!/bin/bash
+# ===========================================
+# ЗАГРУЗКА ВСЕХ СКРИПТОВ И ФУНКЦИЙ
+# ===========================================
+
+export BASE_DIR=$(pwd)/make2maven
+export SCRIPT_DIR="${BASE_DIR}/scripts"
+
+echo "Текущая директория: $SCRIPT_DIR"
+
+# 3. Загружаем функции из всех шагов
+load_functions_from_file() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        source "$file"
+        echo "✅ Функции загружены из: $(basename "$file")"
+        return 0
+    else
+        echo "❌ Файл не найден: $(basename "$file")"
+        return 1
+    fi
+}
+
+echo ""
+echo "Загрузка функций..."
+
+# Порядок важен! Функции могут зависеть друг от друга
+load_functions_from_file "$SCRIPT_DIR/sensitive"
+load_functions_from_file "$SCRIPT_DIR/0_config"
+load_functions_from_file "$SCRIPT_DIR/1_utils"
+load_functions_from_file "$SCRIPT_DIR/2_check_env"
+load_functions_from_file "$SCRIPT_DIR/3_prepare_jars"
+load_functions_from_file "$SCRIPT_DIR/4_generate_pom"
+load_functions_from_file "$SCRIPT_DIR/5_sign_artifacts"
+load_functions_from_file "$SCRIPT_DIR/6_publish_maven"
+
+echo ""
+echo "========================================"
+echo "✅ ВСЕ ФУНКЦИИ ЗАГРУЖЕНЫ!"
+echo "   Проект: ${GROUP_ID}:${ARTIFACT_NAME}:${VERSION}"
+echo ""
+echo "Тестирование функций..."
+echo ""
+
+# Проверяем что основные функции работают
+if type log_info &>/dev/null && type log_success &>/dev/null; then
+    log_success "Функции логирования работают"
+else
+    log_error "Ошибка: функции логирования не загружены"
+    return 1 2>/dev/null || exit 1
+fi
+
+if type check_required_vars &>/dev/null; then
+    log_success "Функция check_required_vars найдена"
+else
+    log_error "Ошибка: check_required_vars не найдена"
+    return 1 2>/dev/null || exit 1
+fi
+
+log_success "Все готово к публикации!"
+echo "========================================"
