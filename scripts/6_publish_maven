@@ -12,7 +12,7 @@ show_publication_info() {
     echo "Данные для публикации:"
     echo "----------------------"
     echo "Группа:       $GROUP_ID"
-    echo "Артефакт:     $ARTIFACT_NAME"
+    echo "Артефакт:     $ARTIFACT_ID"
     echo "Версия:       $VERSION"
     echo "Пакет:        $SOURCES_PACKAGE"
     echo "Репозиторий:  $REPOSITORY_URL"
@@ -99,7 +99,7 @@ show_publication_success() {
 
     echo ""
     echo "Ссылка для проверки:"
-    echo "https://repo1.maven.org/maven2/$(echo $GROUP_ID | tr '.' '/')/$ARTIFACT_NAME/$VERSION/"
+    echo "https://repo1.maven.org/maven2/$(echo $GROUP_ID | tr '.' '/')/$ARTIFACT_ID/$VERSION/"
 }
 
 show_publication_error() {

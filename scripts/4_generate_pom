@@ -41,7 +41,7 @@ generate_pom_xml() {
   <!--  do_not_remove: published-with-gradle-metadata  -->
   <modelVersion>4.0.0</modelVersion>
   <groupId>$GROUP_ID</groupId>
-  <artifactId>$ARTIFACT_NAME</artifactId>
+  <artifactId>$ARTIFACT_ID</artifactId>
   <version>$VERSION</version>
   <packaging>$PACKAGING_TYPE</packaging>
   <name>$PROJECT_NAME</name>
@@ -140,7 +140,7 @@ create_maven_directory_structure() {
 # copy_artifacts_to_maven_structure() {
 #     log_info "Копирование ВСЕХ артефактов в Maven структуру..."
 
-#     local artifact_base="${ARTIFACT_NAME}-${VERSION}"
+#     local artifact_base="${ARTIFACT_ID}-${VERSION}"
     
 #     # ВСЕ файлы
 #     local all_files=(
